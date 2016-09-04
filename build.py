@@ -141,7 +141,7 @@ class DahuaBuilder():
 					self.Logger.error("Generated file '{}' exceedes maximum allowed filesize!".format(Key))
 					raise Exception("File exceeds maximum allowed filesize!")
 
-		DestPath = os.path.join(self.BuildDir, os.path.basename(self.Source).rstrip(".extracted"))
+		DestPath = os.path.join(self.BuildDir, os.path.basename(self.Source).rstrip(".extracted").rstrip(".bin") + ".bin")
 		self.DestFile = open(DestPath, "wb")
 
 		self.Logger.info("Building compressed firmware image.")

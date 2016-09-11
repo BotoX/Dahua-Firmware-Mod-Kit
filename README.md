@@ -34,7 +34,7 @@ This allows the user to study and edit the files in the SquashFS filesystem.
 The script can also compress the extracted files again and will apply the original flags and the correct uImage header.
 
 In order to build a working firmware upgrade image from the extracted files, run:
-`./extract.py <firmware.bin.extracted>`
+`./build.py <firmware.bin.extracted>`
 
 This will create a directory "build" where intermediary files will be placed and the new firmware upgrade image will be created: &lt;firmware.bin&gt;
 

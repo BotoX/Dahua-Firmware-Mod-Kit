@@ -9,13 +9,17 @@ import zipfile
 import subprocess
 import shutil
 import uImage
-from config import *
+import importlib
+import tempfile
+
 
 def eprint(*args, **kwargs):
 	print(*args, file=sys.stderr, **kwargs)
 
+
 class DahuaExtractor():
-	DEPENDENCIES = ["sudo", "unsquashfs"]
+	DEPENDENCIES = ["sudo", "unsquashfs", "mount", "umount", "cp"]
+
 	def __init__(self, debug):
 		self.Debug = debug
 		self.Logger = logging.getLogger(__class__.__name__)
@@ -145,14 +149,36 @@ class DahuaExtractor():
 		DestDir = Path.rstrip(".raw") + ".extracted"
 		# Need root to preserve permissions.
 		if self.Debug:
-			Result = subprocess.run(["sudo", "unsquashfs", "-d", DestDir, Path])
+			Result = subprocess.call(["sudo", "unsquashfs", "-d", DestDir, Path])
 		else:
-			Result = subprocess.run(["sudo", "unsquashfs", "-d", DestDir, Path], stdout=subprocess.DEVNULL)
+			Result = subprocess.call(["sudo", "unsquashfs", "-d", DestDir, Path], stdout=subprocess.DEVNULL)
 
-		return Result.returncode
+		return Result
 
 	def Handle_CramFS(self, Key):
-		# idk how to extract this
+		Path = os.path.join(self.DestDir, Key)
+		DestDir = Path.rstrip(".raw") + ".extracted"
+		TempDir = tempfile.mkdtemp()
+
+		self.Logger.debug("Using temporary mount dir {}".format(TempDir))
+		# Mount cramfs file
+		Result = subprocess.call(["sudo", "mount", "-t", "cramfs", "-o", "loop", Path, TempDir])
+		if Result != 0:
+			self.Logger.error("Error mounting cramfs file {}".format(Path))
+			return Result
+
+		# Copy files to .extracted dir
+		Result = subprocess.call(["sudo", "cp", "-rp", TempDir, DestDir])
+		if Result != 0:
+			self.Logger.error("Error copying files from {} to {}".format(TempDir, DestDir))
+			return Result
+
+		# Unmount cramfs file
+		Result = subprocess.call(["sudo", "umount", TempDir])
+		if Result != 0:
+			self.Logger.error("Error unmounting {}".format(TempDir))
+			return Result
+		os.removedirs(TempDir)
 		return 0
 
 
@@ -165,8 +191,16 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description="Extract Dahua firmware images.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="Turn on verbose (debugging) output")
+	parser.add_argument("-c", "--config", help="Load alternate config file", default="config.py")
 	parser.add_argument("source", help="Source File")
 	args = parser.parse_args()
+
+	if not os.path.isfile(args.config):
+		eprint("Config file not found: '{}'".format(args.config))
+		sys.exit(1)
+
+	# import config file
+	globals().update(importlib.import_module(args.config[:-3]).__dict__)
 
 	if not os.path.isfile(args.source):
 		eprint("No such file: '{}'".format(args.source))

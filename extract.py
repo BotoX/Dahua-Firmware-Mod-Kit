@@ -9,14 +9,13 @@ import zipfile
 import subprocess
 import shutil
 import uImage
-from config import *
-
-def eprint(*args, **kwargs):
-	print(*args, file=sys.stderr, **kwargs)
+import importlib
+from configs.config import *
 
 class DahuaExtractor():
-	DEPENDENCIES = ["sudo", "unsquashfs"]
-	def __init__(self, debug):
+	DEPENDENCIES = ["sudo", "unsquashfs", "cramfsck"]
+	def __init__(self, config, debug):
+		self.Config = config
 		self.Debug = debug
 		self.Logger = logging.getLogger(__class__.__name__)
 		if self.Debug:
@@ -26,23 +25,24 @@ class DahuaExtractor():
 		self.Source = None
 		self.SourceFile = None
 		self.ZipFile = None
+		self.DahuaFiles = self.Config.DAHUA_FILES
 
 	def CheckDependencies(self):
 		Ret = 0
 		for dependency in self.DEPENDENCIES:
 			if not distutils.spawn.find_executable(dependency):
-				self.Logger.error("Missing dependency: '{}'".format(dependency))
+				self.Logger.error("Missing dependency: '%s'", dependency)
 				Ret = 1
 		return Ret
 
 	def Extract(self, source):
 		self.Source = os.path.abspath(source)
-		self.Logger.debug("Opening source file '{}'".format(self.Source))
+		self.Logger.debug("Opening source file '%s'", self.Source)
 		self.SourceFile = open(self.Source, "r+b")
 
 		Header = self.SourceFile.read(2)
 		self.SourceFile.seek(0)
-		self.Logger.debug("Checking source header: '{}'".format(Header.decode("ascii", errors="ignore")))
+		self.Logger.debug("Checking source header: '%s'", Header.decode("ascii", errors="ignore"))
 		if Header == b'DH':
 			self.Logger.debug("Patching source header to: 'PK'")
 			self.SourceFile.write(b"PK")
@@ -59,19 +59,19 @@ class DahuaExtractor():
 		self.Logger.debug("Checking zipfile CRC.")
 		ZipTestResult = self.ZipFile.testzip()
 		if ZipTestResult:
-			self.Logger.error("ZipFile corrupt, first file which did not pass test: '{}'".format(ZipTestResult))
+			self.Logger.error("ZipFile corrupt, first file which did not pass test: '%s'", ZipTestResult)
 			raise Exception("ZipFile corrupt!")
 
 		self.Logger.debug("Zipfile contents:")
 		for index, item in enumerate(self.ZipFile.filelist):
-			self.Logger.debug("{0}: {1} ({2} bytes)".format(index, item.filename, item.file_size))
+			self.Logger.debug("%s: %s (%d bytes)", index, item.filename, item.file_size)
 
 		self.DestDir = os.path.basename(self.Source) + ".extracted"
 		if os.path.exists(self.DestDir):
-			self.Logger.error("Destination directory '{}' already exists! Please delete it if you want to continue.".format(os.path.basename(self.DestDir)))
+			self.Logger.error("Destination directory '%s' already exists! Please delete it if you want to continue.", os.path.basename(self.DestDir))
 			raise Exception("Destination directory already exists!")
 
-		self.Logger.info("Extracting {0} files to: '{1}'".format(len(self.ZipFile.filelist), self.DestDir))
+		self.Logger.info("Extracting %d files to: '%s'", len(self.ZipFile.filelist), self.DestDir)
 		self.ZipFile.extractall(path=self.DestDir)
 		self.ExtractedFiles = self.ZipFile.namelist()
 
@@ -81,16 +81,16 @@ class DahuaExtractor():
 
 		# Call Handle() for every extracted file
 		for Key in self.ExtractedFiles:
-			if Key not in DAHUA_FILES:
-				self.Logger.warning("Unrecognized file: '{}'.".format(Key))
+			if Key not in self.DahuaFiles:
+				self.Logger.warning("Unrecognized file: '%s'.", Key)
 				continue
 
-			Value = DAHUA_FILES[Key]
-			self.Logger.info("Processing '{}'.".format(Key))
+			Value = self.DahuaFiles[Key]
+			self.Logger.info("Processing '%s'.", Key)
 
 			if Value["type"] & DAHUA_TYPE.uImage:
 				if self.Handle_uImage(Key) != 0:
-					self.Logger.error("'uImage' handler returned non-zero return value for file: '{}'".format(Key))
+					self.Logger.error("'uImage' handler returned non-zero return value for file: '%s'", Key)
 					raise Exception("Handler returned non-zero return value!")
 				# for the next handler
 				Key += ".raw"
@@ -100,12 +100,12 @@ class DahuaExtractor():
 
 			if Value["type"] & DAHUA_TYPE.SquashFS:
 				if self.Handle_SquashFS(Key) != 0:
-					self.Logger.error("'SquashFS' handler returned non-zero return value for file: '{}'".format(Key))
+					self.Logger.error("'SquashFS' handler returned non-zero return value for file: '%s'", Key)
 					raise Exception("Handler returned non-zero return value!")
 
 			if Value["type"] & DAHUA_TYPE.CramFS:
 				if self.Handle_CramFS(Key) != 0:
-					self.Logger.error("'CramFS' handler returned non-zero return value for file: '{}'".format(Key))
+					self.Logger.error("'CramFS' handler returned non-zero return value for file: '%s'", Key)
 					raise Exception("Handler returned non-zero return value!")
 
 		self.Logger.debug("Reverting source header patch.")
@@ -145,16 +145,22 @@ class DahuaExtractor():
 		DestDir = Path.rstrip(".raw") + ".extracted"
 		# Need root to preserve permissions.
 		if self.Debug:
-			Result = subprocess.run(["sudo", "unsquashfs", "-d", DestDir, Path])
+			Result = subprocess.call(["sudo", "unsquashfs", "-d", DestDir, Path])
 		else:
-			Result = subprocess.run(["sudo", "unsquashfs", "-d", DestDir, Path], stdout=subprocess.DEVNULL)
+			Result = subprocess.call(["sudo", "unsquashfs", "-d", DestDir, Path], stdout=subprocess.DEVNULL)
 
-		return Result.returncode
+		return Result
 
 	def Handle_CramFS(self, Key):
-		# idk how to extract this
-		return 0
+		Path = os.path.join(self.DestDir, Key)
+		DestDir = Path.rstrip(".raw") + ".extracted"
+		# Need root to preserve permissions.
+		if self.Debug:
+			Result = subprocess.call(["sudo", "cramfsck", "-x", DestDir, Path])
+		else:
+			Result = subprocess.call(["sudo", "cramfsck", "-x", DestDir, Path], stdout=subprocess.DEVNULL)
 
+		return Result
 
 if __name__ == "__main__":
 	logging.basicConfig(format="%(levelname)s\t%(message)s")
@@ -165,14 +171,51 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description="Extract Dahua firmware images.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="Turn on verbose (debugging) output")
+	parser.add_argument("-c", "--config", default="auto", help="Configuration to use. (Default: auto)")
 	parser.add_argument("source", help="Source File")
 	args = parser.parse_args()
 
+	Logger = logging.getLogger("main")
+	if args.verbose:
+		Logger.setLevel(logging.DEBUG)
+	else:
+		Logger.setLevel(logging.INFO)
+
 	if not os.path.isfile(args.source):
-		eprint("No such file: '{}'".format(args.source))
+		Logger.error("No such file: '%s'", args.source)
 		sys.exit(1)
 
-	extractor = DahuaExtractor(args.verbose)
+	Found = None
+	if args.config == "auto":
+		Name = os.path.basename(os.path.abspath(args.source)).lower()
+		for Config in DAHUA_CONFIGS:
+			if Config.lower() in Name:
+				Logger.warn("Autodetected config: %s", Config)
+				Found = Config
+				break
+
+		if not Found:
+			Logger.error("Could not autodetect config!")
+	else:
+		ArgConfig = args.config.lower()
+		for Config in DAHUA_CONFIGS:
+			if Config.lower() == ArgConfig:
+				Logger.warn("Found config: %s", Config)
+				Found = Config
+				break
+
+		if not Found:
+			Logger.error("Invalid config specified! (Add to configs/config.py DAHUA_CONFIGS if you made a new one)")
+
+	if not Found:
+		Logger.info("Please use -c to select the correct config from the following list:")
+		for Config in DAHUA_CONFIGS:
+			Logger.info("\t" + Config)
+		sys.exit(1)
+
+	Config = importlib.import_module("configs." + Found)
+
+	extractor = DahuaExtractor(Config, args.verbose)
 	if extractor.CheckDependencies():
 		sys.exit(1)
 	extractor.Extract(args.source)

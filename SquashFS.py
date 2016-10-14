@@ -4,7 +4,20 @@ import struct
 
 HEADER_FORMAT = "IIiIIHHHHHHqqqqqqqq"
 HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
+HEADER3_FORMAT = "<IIIIIIIHHHHBBBiqIIIqqqqqqq"
+HEADER3_SIZE = struct.calcsize(HEADER3_FORMAT)
 HEADER_MAGIC = 0x73717368
+
+HEADER_KEYS = ["s_magic", "inodes", "mkfs_time", "block_size", "fragments", "compression", "block_log",
+			   "flags", "no_ids", "s_major", "s_minor", "root_inode", "bytes_used", "id_table_start",
+			   "xattr_id_table_start", "inode_table_start", "directory_table_start", "fragment_table_start",
+			   "lookup_table_start"]
+
+HEADER3_KEYS = ["s_magic", "inodes", "bytes_used_2", "uid_start_2", "guid_start_2", "inode_table_start_2",
+				"directory_table_start_2", "s_major", "s_minor", "block_size_1", "block_log", "flags",
+				"no_uids", "no_guids", "mkfs_time", "root_inode", "block_size", "fragments",
+				"fragment_table_start_2", "bytes_used", "uid_start", "guid_start", "inode_table_start",
+				"directory_table_start", "fragment_table_start", "lookup_table_start"]
 
 ZLIB_COMPRESSION		= 1
 LZMA_COMPRESSION		= 2
@@ -62,15 +75,22 @@ def parseHeader(fh, offset=0):
 
 	block = fh.read(HEADER_SIZE)
 
-	### Names of fields in the image header
-	keys = ["s_magic", "inodes", "mkfs_time", "block_size", "fragments", "compression", "block_log",
-			"flags", "no_ids", "s_major", "s_minor", "root_inode", "bytes_used", "id_table_start",
-			"xattr_id_table_start", "inode_table_start", "directory_table_start", "fragment_table_start",
-			"lookup_table_start"]
-
 	### Unpack the header into a dictionary of (key,value) pairs
 	values = struct.unpack(HEADER_FORMAT, block)
-	hd = dict(zip(keys, values))
+	hd = dict(zip(HEADER_KEYS, values))
+
+	if hd["s_magic"] != HEADER_MAGIC:
+		fh.seek(startpos)
+		return dict({"s_magic": hd["s_magic"]})
+
+	### Not a Squashfs 4 superblock, try to read a squashfs 3 superblock
+ 	### (compatible with 1 and 2 filesystems)
+	if hd["s_major"] != 4:
+		fh.seek(offset)
+		block = fh.read(HEADER3_SIZE)
+
+		values = struct.unpack(HEADER3_FORMAT, block)
+		hd = dict(zip(HEADER3_KEYS, values))
 
 	### Get compression options if compression is used
 	if hd["flags"] & SQUASHFS_COMP_OPT:
@@ -128,7 +148,8 @@ def parseHeader(fh, offset=0):
 ###
 def buildConOpts(hd):
 	args = []
-	args.extend(("-comp", COMPRESSION_STRING[hd["compression"]]))
+	if "compression" in hd:
+		args.extend(("-comp", COMPRESSION_STRING[hd["compression"]]))
 	args.extend(("-b", str(hd["block_size"])))
 
 	if not hd["flags"] & SQUASHFS_EXPORT:

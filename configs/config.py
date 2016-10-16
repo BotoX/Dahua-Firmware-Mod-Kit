@@ -7,4 +7,4 @@ class DAHUA_TYPE(IntEnum):
 	SquashFS = 4
 	CramFS = 8
 
-DAHUA_CONFIGS = ["Eos", "Themis", "VTO"]
+DAHUA_CONFIGS = ["Eos", "Themis", "VTO", "nvr4xxx-4K"]

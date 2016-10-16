@@ -44,6 +44,5 @@ DAHUA_FILES = OrderedDict([
 		"required": True,
 		"type": DAHUA_TYPE.uImage | DAHUA_TYPE.CramFS,
 		"size": 0x00020000
-	}),
-
+	})
 ])

@@ -1,11 +1,6 @@
 from .config import *
 
 DAHUA_FILES = OrderedDict([
-	("hwid", {
-		"required": False,
-		"type": DAHUA_TYPE.Plain,
-		"size": 0x00020000
-	}),
 	("Install", {
 		"required": True,
 		"type": DAHUA_TYPE.Plain
@@ -16,34 +11,34 @@ DAHUA_FILES = OrderedDict([
 		"size": 0x00180000
 	}),
 	("dhboot-min.bin.img", {
-		"required": False,
+		"required": True,
 		"type": DAHUA_TYPE.Plain,
-		"size": 0x00030000
+		"size": 0x00040000
 	}),
 	("dhboot.bin.img", {
 		"required": True,
 		"type": DAHUA_TYPE.Plain,
-		"size": 0x00030000
+		"size": 0x00040000
 	}),
 	("romfs-x.squashfs.img", {
 		"required": True,
 		"type": DAHUA_TYPE.uImage | DAHUA_TYPE.SquashFS,
-		"size": 0x000e0000
+		"size": 0x00150000
 	}),
 	("user-x.squashfs.img", {
 		"required": True,
 		"type": DAHUA_TYPE.uImage | DAHUA_TYPE.SquashFS,
-		"size": 0x008c0000
+		"size": 0x00830000
 	}),
 	("web-x.squashfs.img", {
 		"required": True,
 		"type": DAHUA_TYPE.uImage | DAHUA_TYPE.SquashFS,
-		"size": 0x00280000
+		"size": 0x00210000
 	}),
 	("pd-x.squashfs.img", {
 		"required": True,
 		"type": DAHUA_TYPE.uImage | DAHUA_TYPE.SquashFS,
-		"size": 0x00020000
+		"size": 0x00010000
 	}),
 	("custom-x.squashfs.img", {
 		"required": True,
@@ -53,10 +48,10 @@ DAHUA_FILES = OrderedDict([
 	("partition-x.cramfs.img", {
 		"required": True,
 		"type": DAHUA_TYPE.uImage | DAHUA_TYPE.CramFS,
-		"size": 0x00020000
+		"size": 0x00010000
 	}),
 	("check.img", {
 		"required": True,
 		"type": DAHUA_TYPE.uImage | DAHUA_TYPE.Plain
-	}),
+	})
 ])

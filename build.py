@@ -14,7 +14,7 @@ import importlib
 from configs.config import *
 
 class DahuaBuilder():
-	DEPENDENCIES = ["sudo", "mksquashfs", "mkimage"]
+	DEPENDENCIES = ["sudo", "mksquashfs", "mkcramfs", "mkimage"]
 	def __init__(self, config, debug):
 		self.Config = config
 		self.Debug = debug
@@ -208,7 +208,7 @@ class DahuaBuilder():
 			self.Logger.error("Invalid SquashFS magic number!")
 			return 1
 
-		Version = "" if Header == 4 else str(Header["s_major"])
+		Version = "" if Header["s_major"] == 4 else str(Header["s_major"])
 		ConOpts = SquashFS.buildConOpts(Header)
 
 		# Need root to access all files.
@@ -258,10 +258,9 @@ if __name__ == "__main__":
 
 	Found = None
 	if args.config == "auto":
-		Name = os.path.basename(os.path.abspath(args.source)).lower()
-		print(Name)
+		Name = os.path.basename(os.path.abspath(args.source))
 		for Config in DAHUA_CONFIGS:
-			if Config.lower() in Name:
+			if Config in Name:
 				Logger.warn("Autodetected config: %s", Config)
 				Found = Config
 				break

@@ -17,6 +17,7 @@ First of all, this will only work on Linux. I'm using Archlinux, but any modern 
 - **sudo** - to preserve permissions of the extracted files
 - uboot-tools
 - squashfs-tools - use [my fork](https://github.com/BotoX/squashfs-tools)!
+- cramfs - from [firmware-mod-kit](https://github.com/mirror/firmware-mod-kit/tree/master/src/cramfs-2.x)
 
 
 ### Usage
@@ -28,9 +29,9 @@ This directory contains all the files in the firmware.bin (which is just a ZIP f
 Most importantly, the files will also be processed according to "[config.py](config.py)", for example:
 
 - uImage header stripped to &lt;file&gt;.uImage and content to &lt;file&gt;.raw
-- SquashFS will be extracted to &lt;file&gt;.extracted
+- SquashFS/CramFS will be extracted to &lt;file&gt;.extracted
 
-This allows the user to study and edit the files in the SquashFS filesystem.
+This allows the user to study and edit the files in the filesystem.
 The script can also compress the extracted files again and will apply the original flags and the correct uImage header.
 
 In order to build a working firmware upgrade image from the extracted files, run:
@@ -47,5 +48,5 @@ Also check out the changes I've done on a firmware image [here](https://github.c
 
 ### Contributing / Questions / Support
 - [This thread](https://www.ipcamtalk.com/showthread.php/13591-Dahua-Firmware-Mod-Kit-Modded-Dahua-Firmware) on ipcamtalk. (Also has example firmware)
-- Hit me up on IRC: BotoX @ freenode/rizon
+- Hit me up on IRC: BotoX @ freenode | rizon
 - Issues / PRs welcome.

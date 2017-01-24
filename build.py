@@ -185,6 +185,10 @@ class DahuaBuilder():
 		EntryPoint = str(hex(Header["entryAddr"]))[2:]
 		Name = Header["name"].decode("ascii", errors="ignore").rstrip('\0')
 
+		if self.Debug:
+			self.Logger.debug(' '.join(["mkimage", "-A", Arch, "-O", OS, "-T", ImageType, "-C", Compression,
+										"-a", LoadAddress, "-e", EntryPoint, "-n", Name, "-d", DataPath, DestPath]))
+
 		Result = subprocess.call(["mkimage", "-A", Arch, "-O", OS, "-T", ImageType, "-C", Compression,
 								  "-a", LoadAddress, "-e", EntryPoint, "-n", Name, "-d", DataPath, DestPath])
 
@@ -213,6 +217,7 @@ class DahuaBuilder():
 
 		# Need root to access all files.
 		if self.Debug:
+			self.Logger.debug(' '.join(["sudo", "mksquashfs" + Version, ExtractedDir, DestPath] + ConOpts))
 			Result = subprocess.call(["sudo", "mksquashfs" + Version, ExtractedDir, DestPath] + ConOpts)
 		else:
 			Result = subprocess.call(["sudo", "mksquashfs" + Version, ExtractedDir, DestPath] + ConOpts, stdout=subprocess.DEVNULL)
@@ -226,6 +231,7 @@ class DahuaBuilder():
 
 		# Need root to access all files.
 		if self.Debug:
+			self.Logger.debug(' '.join(["sudo", "mkcramfs", ExtractedDir, DestPath]))
 			Result = subprocess.call(["sudo", "mkcramfs", ExtractedDir, DestPath])
 		else:
 			Result = subprocess.call(["sudo", "mkcramfs", ExtractedDir, DestPath], stdout=subprocess.DEVNULL)

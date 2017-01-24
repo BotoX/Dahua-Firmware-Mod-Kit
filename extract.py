@@ -145,6 +145,7 @@ class DahuaExtractor():
 		DestDir = Path.rstrip(".raw") + ".extracted"
 		# Need root to preserve permissions.
 		if self.Debug:
+			self.Logger.debug(' '.join(["sudo", "unsquashfs", "-d", DestDir, Path]))
 			Result = subprocess.call(["sudo", "unsquashfs", "-d", DestDir, Path])
 		else:
 			Result = subprocess.call(["sudo", "unsquashfs", "-d", DestDir, Path], stdout=subprocess.DEVNULL)
@@ -156,6 +157,7 @@ class DahuaExtractor():
 		DestDir = Path.rstrip(".raw") + ".extracted"
 		# Need root to preserve permissions.
 		if self.Debug:
+			self.Logger.debug(' '.join(["sudo", "cramfsck", "-x", DestDir, Path]))
 			Result = subprocess.call(["sudo", "cramfsck", "-x", DestDir, Path])
 		else:
 			Result = subprocess.call(["sudo", "cramfsck", "-x", DestDir, Path], stdout=subprocess.DEVNULL)

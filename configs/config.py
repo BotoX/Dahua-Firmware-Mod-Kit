@@ -9,6 +9,9 @@ class DAHUA_TYPE(IntEnum):
 
 DAHUA_CONFIGS = [
 	"HX4XXX-Eos", "HX4X2X-Themis",
+	"HX8XXX-Eos",
+	"SD-Zi-Themis",
 	"VTO2000A",
-	"NVR4XXX-4K", "NVR4xxx"
+	"NVR4XXX-4K", "NVR4xxx",
+	"HCVR5x04",
 ]

@@ -44,6 +44,17 @@ The script will check if all the required files/images are available and if the 
 This was tested on a DH-IPC-HDW4431C-A cameras and worked fine **for me**, be ready to solder some wires to the serial port if you are poking around with the camera, because the cameras U-Boot does not come with a netconsole and there is no other known recovery procedure (however it does try to TFTP a file "upgrade_info_7db780a713a4.txt").
 
 Also check out the changes I've done on a firmware image [here](https://github.com/BotoX/DH_IPC-HX4XXX-Eos).
+Adding telnet to newer firmware images is recommended, since Dahua nuked telnet after the botnet incident.
+
+#### Extra
+I've also added a script `lang.py` that will compare two dahua language files and make a new one out of it.
+
+Lines from *input* which do not exist in *reference* will be removed, lines which exist in *reference* but do not in *input* will be appended at the end of the output.
+
+Usage: `./lang.py <reference> <input>` where reference could be the language file which came with the firmware and input a language file you have extracted from somewhere else.
+The script will output statistics on stderr and the processed input file on stdout.
+
+Example: `./lang.py English.txt Russian.txt > Russian.fixed.txt`
 
 
 ### Contributing / Questions / Support

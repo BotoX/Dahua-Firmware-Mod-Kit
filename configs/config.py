@@ -9,6 +9,7 @@ class DAHUA_TYPE(IntEnum):
 
 DAHUA_CONFIGS = [
 	"HX4XXX-Eos", "HX4X2X-Themis",
+	"HX4XXX-NAND-Eos",
 	"HX8XXX-Eos",
 	"SD-Zi-Themis",
 	"VTO2000A",

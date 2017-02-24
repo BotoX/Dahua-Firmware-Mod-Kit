@@ -51,10 +51,10 @@ I've also added a script `lang.py` that will compare two dahua language files an
 
 Lines from *input* which do not exist in *reference* will be removed, lines which exist in *reference* but do not in *input* will be appended at the end of the output.
 
-Usage: `./lang.py <reference> <input>` where reference could be the language file which came with the firmware and input a language file you have extracted from somewhere else.
-The script will output statistics on stderr and the processed input file on stdout.
+Usage: `./lang.py <reference> <input> <output>` where reference could be the language file which came with the firmware and input a language file you have extracted from somewhere else.
+The script will output statistics on stderr.
 
-Example: `./lang.py English.txt Russian.txt > Russian.fixed.txt`
+Example: `./lang.py English.txt Russian.txt Russian.fixed.txt`
 
 
 ### Contributing / Questions / Support

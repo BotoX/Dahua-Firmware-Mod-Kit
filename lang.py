@@ -11,19 +11,22 @@ def eprint(*args, **kwargs):
     print(*args, file = sys.stderr, **kwargs)
 
 if __name__ == "__main__":
-	if len(sys.argv) != 3:
-		eprint("Usage: {0} <reference> <input>".format(sys.argv[0]))
+	if len(sys.argv) != 4:
+		eprint("Usage: {0} <reference> <input> <output>".format(sys.argv[0]))
 		exit(1)
 
 	REFERENCE = sys.argv[1]
 	INPUT = sys.argv[2]
+	OUTPUT = sys.argv[3]
 
 	RefFP = open(REFERENCE, "rb")
 	RefTXT = RefFP.read().decode("utf-8-sig")
+	RefFP.close()
 	Ref = json.loads(RefTXT, object_pairs_hook = OrderedDict, strict = False)
 
 	InFP = open(INPUT, "rb")
 	InTXT = InFP.read().decode("utf-8-sig")
+	InFP.close()
 	In = json.loads(InTXT, object_pairs_hook = OrderedDict, strict = False)
 
 	Out = OrderedDict()
@@ -52,7 +55,9 @@ if __name__ == "__main__":
 	OutTXT = OutTXT.replace("{", "{\n", 1)
 	OutTXT = "\n}".join(OutTXT.rsplit("}", 1))
 
-	print(OutTXT)
+	OutFP = open(OUTPUT, "wb")
+	OutFP.write(OutTXT.encode("utf-8-sig"))
+	OutFP.close()
 
 	eprint("--- Statistics ---")
 	eprint("Reference: {0}".format(os.path.basename(REFERENCE)))

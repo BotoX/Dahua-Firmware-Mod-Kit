@@ -13,7 +13,7 @@ import importlib
 from configs.config import *
 
 class DahuaExtractor():
-	DEPENDENCIES = ["sudo", "unsquashfs", "cramfsck"]
+	DEPENDENCIES = ["sudo"]
 	def __init__(self, config, debug):
 		self.Config = config
 		self.Debug = debug
@@ -30,10 +30,14 @@ class DahuaExtractor():
 	def CheckDependencies(self):
 		Ret = 0
 		for dependency in self.DEPENDENCIES:
-			if not distutils.spawn.find_executable(dependency):
-				self.Logger.error("Missing dependency: '%s'", dependency)
+			if self.CheckDependency(dependency):
 				Ret = 1
 		return Ret
+
+	def CheckDependency(self, dependency):
+		if not distutils.spawn.find_executable(dependency):
+			self.Logger.critical("Missing dependency: '%s'", dependency)
+			return 1
 
 	def Extract(self, source):
 		self.Source = os.path.abspath(source)
@@ -143,24 +147,34 @@ class DahuaExtractor():
 	def Handle_SquashFS(self, Key):
 		Path = os.path.join(self.DestDir, Key)
 		DestDir = Path.rstrip(".raw") + ".extracted"
+
+		Binary = "unsquashfs"
+		if self.CheckDependency(Binary):
+			return 1
+
 		# Need root to preserve permissions.
 		if self.Debug:
-			self.Logger.debug(' '.join(["sudo", "unsquashfs", "-d", DestDir, Path]))
-			Result = subprocess.call(["sudo", "unsquashfs", "-d", DestDir, Path])
+			self.Logger.debug(' '.join(["sudo", Binary, "-d", DestDir, Path]))
+			Result = subprocess.call(["sudo", Binary, "-d", DestDir, Path])
 		else:
-			Result = subprocess.call(["sudo", "unsquashfs", "-d", DestDir, Path], stdout=subprocess.DEVNULL)
+			Result = subprocess.call(["sudo", Binary, "-d", DestDir, Path], stdout=subprocess.DEVNULL)
 
 		return Result
 
 	def Handle_CramFS(self, Key):
 		Path = os.path.join(self.DestDir, Key)
 		DestDir = Path.rstrip(".raw") + ".extracted"
+
+		Binary = "cramfsck"
+		if self.CheckDependency(Binary):
+			return 1
+
 		# Need root to preserve permissions.
 		if self.Debug:
-			self.Logger.debug(' '.join(["sudo", "cramfsck", "-x", DestDir, Path]))
-			Result = subprocess.call(["sudo", "cramfsck", "-x", DestDir, Path])
+			self.Logger.debug(' '.join(["sudo", Binary, "-x", DestDir, Path]))
+			Result = subprocess.call(["sudo", Binary, "-x", DestDir, Path])
 		else:
-			Result = subprocess.call(["sudo", "cramfsck", "-x", DestDir, Path], stdout=subprocess.DEVNULL)
+			Result = subprocess.call(["sudo", Binary, "-x", DestDir, Path], stdout=subprocess.DEVNULL)
 
 		return Result
 
@@ -170,6 +184,7 @@ if __name__ == "__main__":
 	logging.addLevelName(logging.INFO, "\033[1;32m%s\033[1;0m" % logging.getLevelName(logging.INFO))
 	logging.addLevelName(logging.WARNING, "\033[1;31m%s\033[1;0m" % logging.getLevelName(logging.WARNING))
 	logging.addLevelName(logging.ERROR, "\033[1;41m%s\033[1;0m" % logging.getLevelName(logging.ERROR))
+	logging.addLevelName(logging.CRITICAL, "\033[5m\033[1;31m%s\033[1;0m" % logging.getLevelName(logging.CRITICAL))
 
 	parser = argparse.ArgumentParser(description="Extract Dahua firmware images.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="Turn on verbose (debugging) output")

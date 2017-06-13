@@ -14,7 +14,7 @@ import importlib
 from configs.config import *
 
 class DahuaBuilder():
-	DEPENDENCIES = ["sudo", "mksquashfs", "mkcramfs", "mkimage"]
+	DEPENDENCIES = ["sudo", "mkimage"]
 	def __init__(self, config, debug):
 		self.Config = config
 		self.Debug = debug
@@ -33,10 +33,14 @@ class DahuaBuilder():
 	def CheckDependencies(self):
 		Ret = 0
 		for dependency in self.DEPENDENCIES:
-			if not distutils.spawn.find_executable(dependency):
-				self.Logger.error("Missing dependency: '%s'", dependency)
+			if self.CheckDependency(dependency):
 				Ret = 1
 		return Ret
+
+	def CheckDependency(self, dependency):
+		if not distutils.spawn.find_executable(dependency):
+			self.Logger.critical("Missing dependency: '%s'", dependency)
+			return 1
 
 	def Build(self, source):
 		self.Source = os.path.abspath(source)
@@ -213,14 +217,18 @@ class DahuaBuilder():
 			return 1
 
 		Version = "" if Header["s_major"] == 4 else str(Header["s_major"])
+		Binary = "mksquashfs" + Version
+		if self.CheckDependency(Binary):
+			return 1
+
 		ConOpts = SquashFS.buildConOpts(Header)
 
 		# Need root to access all files.
 		if self.Debug:
-			self.Logger.debug(' '.join(["sudo", "mksquashfs" + Version, ExtractedDir, DestPath] + ConOpts))
-			Result = subprocess.call(["sudo", "mksquashfs" + Version, ExtractedDir, DestPath] + ConOpts)
+			self.Logger.debug(' '.join(["sudo", Binary, ExtractedDir, DestPath] + ConOpts))
+			Result = subprocess.call(["sudo", Binary, ExtractedDir, DestPath] + ConOpts)
 		else:
-			Result = subprocess.call(["sudo", "mksquashfs" + Version, ExtractedDir, DestPath] + ConOpts, stdout=subprocess.DEVNULL)
+			Result = subprocess.call(["sudo", Binary, ExtractedDir, DestPath] + ConOpts, stdout=subprocess.DEVNULL)
 
 		return Result
 
@@ -229,12 +237,16 @@ class DahuaBuilder():
 		OrigPath = os.path.join(self.Source, Key + ".raw")
 		DestPath = os.path.join(self.BuildDir, Key + ".raw")
 
+		Binary = "mkcramfs"
+		if self.CheckDependency(Binary):
+			return 1
+
 		# Need root to access all files.
 		if self.Debug:
-			self.Logger.debug(' '.join(["sudo", "mkcramfs", ExtractedDir, DestPath]))
-			Result = subprocess.call(["sudo", "mkcramfs", ExtractedDir, DestPath])
+			self.Logger.debug(' '.join(["sudo", Binary, ExtractedDir, DestPath]))
+			Result = subprocess.call(["sudo", Binary, ExtractedDir, DestPath])
 		else:
-			Result = subprocess.call(["sudo", "mkcramfs", ExtractedDir, DestPath], stdout=subprocess.DEVNULL)
+			Result = subprocess.call(["sudo", Binary, ExtractedDir, DestPath], stdout=subprocess.DEVNULL)
 
 		return Result
 
@@ -245,6 +257,7 @@ if __name__ == "__main__":
 	logging.addLevelName(logging.INFO, "\033[1;32m%s\033[1;0m" % logging.getLevelName(logging.INFO))
 	logging.addLevelName(logging.WARNING, "\033[1;31m%s\033[1;0m" % logging.getLevelName(logging.WARNING))
 	logging.addLevelName(logging.ERROR, "\033[1;41m%s\033[1;0m" % logging.getLevelName(logging.ERROR))
+	logging.addLevelName(logging.CRITICAL, "\033[5m\033[1;31m%s\033[1;0m" % logging.getLevelName(logging.CRITICAL))
 
 	parser = argparse.ArgumentParser(description="Build Dahua firmware images.")
 	parser.add_argument("-v", "--verbose", action="store_true", help="Turn on verbose (debugging) output")

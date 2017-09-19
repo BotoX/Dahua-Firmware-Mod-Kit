@@ -24,9 +24,5 @@ DAHUA_FILES = OrderedDict([
 	("logo-x.cramfs.img", {
 		"required": True,
 		"type": DAHUA_TYPE.uImage | DAHUA_TYPE.CramFS
-	}),
-	("sign.img", {
-		"required": True,
-		"type": DAHUA_TYPE.Plain
-	}),
+	})
 ])

@@ -8,11 +8,11 @@ class DAHUA_TYPE(IntEnum):
 	CramFS = 8
 
 DAHUA_CONFIGS = [
-	"HX4XXX-Eos", "HX4X2X-Themis",
+	"HX4XXX-Eos4", "HX4XXX-Eos", "HX4X2X-Themis",
 	"HX4XXX-NAND-Eos",
 	"HX5X3X-Rhea",
-	"HX8XXX-Eos",
-	"SD-Zi-Themis",
+	"HX8XXX-Eos", "HX8XXX-Demeter",
+	"SD-Zi-Themis", "SD-Mao-Themis",
 	"VTO2000A",
 	"NVR4XXX-4K", "NVR4xxx",
 	"HCVR5x04",

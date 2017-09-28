@@ -14,6 +14,6 @@ DAHUA_CONFIGS = [
 	"HX8XXX-Eos", "HX8XXX-Demeter",
 	"SD-Zi-Themis", "SD-Mao-Themis",
 	"VTO2000A",
-	"NVR4XXX-4K", "NVR4xxx",
+	"NVR4XXX-4KS2", "NVR4XXX-4K", "NVR4xxx",
 	"HCVR5x04",
 ]
